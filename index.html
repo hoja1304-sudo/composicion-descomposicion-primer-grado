@@ -659,17 +659,29 @@ let voice=null, speaking=false;
 function pickVoice(){
   const vs=speechSynthesis.getVoices();
   if(!vs.length) return null;
-  const pref=['es-US','es-MX','es-419','es-CO','es-AR','es-CL','es-PE'];
-  for(const p of pref){ const v=vs.find(x=>x.lang&&x.lang.toLowerCase().startsWith(p.toLowerCase())); if(v) return v; }
-  let v=vs.find(x=>x.lang&&x.lang.toLowerCase().startsWith('es')&&!/es-es/i.test(x.lang));
-  return v||vs.find(x=>x.lang&&x.lang.toLowerCase().startsWith('es'))||null;
+  const es=vs.filter(x=>x.lang&&x.lang.toLowerCase().startsWith('es'));
+  if(!es.length) return null;
+  const latam=es.filter(x=>!/es[-_]es/i.test(x.lang));          // descartar España
+  // 1) por nombre: voces "neutro / latinoamericano / América / Google"
+  const byName=latam.find(x=>/neutr|latinoam|latino|am[eé]rica/i.test(x.name));
+  if(byName) return byName;
+  // 2) por etiqueta, de más neutra a regional
+  const order=['es-419','es-us','es-mx','es-co','es-cr','es-pe','es-ec','es-cl','es-ar','es-ve','es-gt'];
+  for(const p of order){ const v=latam.find(x=>x.lang.toLowerCase().startsWith(p)); if(v) return v; }
+  // 3) cualquier español que no sea de España; 4) último recurso: España
+  return latam[0] || es[0];
 }
 if('speechSynthesis' in window){ voice=pickVoice(); speechSynthesis.onvoiceschanged=()=>{voice=pickVoice();}; }
+// Seseo: hace que cualquier voz (incluso de España) pronuncie en español neutro/latino
+function seseo(t){
+  return t.replace(/z/g,'s').replace(/Z/g,'S')
+          .replace(/c(?=[eiéíEIÉÍ])/g,'s').replace(/C(?=[eiéíEIÉÍ])/g,'S');
+}
 function speak(text){
   if(!('speechSynthesis' in window)) return;
   stopSpeak();
-  const u=new SpeechSynthesisUtterance(text);
-  u.lang=(voice&&voice.lang)||'es-MX'; if(voice)u.voice=voice;
+  const u=new SpeechSynthesisUtterance(seseo(text));
+  u.lang=(voice&&voice.lang)||'es-419'; if(voice)u.voice=voice;
   u.rate=.96; u.pitch=1.05;
   u.onend=()=>{speaking=false;}; u.onerror=()=>{speaking=false;};
   speaking=true; speechSynthesis.speak(u);
