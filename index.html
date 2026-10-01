@@ -523,7 +523,7 @@ const FAMILIES=[
   [10,20],[20,30],[30,40],[40,50],[50,60],[10,50],[60,70],[80,90],[90,99],[10,99]
 ];
 const PZ_FAMILIES=[
-  [1,3],[1,4],[1,5],[1,6],[1,7],[1,9],
+  [1,3],[1,4],[1,5],[1,6],[1,7],[1,8],[1,9],
   [10,19],[20,29],[30,39],[40,49],[50,59],[60,69],[70,79],[80,89],[90,99],[1,99]
 ];
 let family={min:10,max:20,label:'De 10 a 20'};
@@ -891,15 +891,16 @@ window.addEventListener('resize',()=>{ if(document.getElementById('juego').class
 let pzTarget=null, pzActive='suma';
 function pzMaxTen(fam){
   var max=fam.max;
-  if(max<10) return max>=9 ? 10 : 0;            // 1–9 necesita el 10; menores no
-  return Math.min(90, (Math.floor(max/10)+1)*10); // hasta la decena siguiente al máximo
+  if(max<10) return 0;                             // familias de 1 cifra: sin decenas
+  return Math.min(90, (Math.floor(max/10)+1)*10);  // hasta la decena siguiente al máximo
 }
+function pzMaxUnit(fam){ return fam.max<10 ? fam.max : 9; } // 1 cifra: solo hasta su máximo
 function pzBuildPalette(){
   var dec=document.getElementById('pzPalDec'), uni=document.getElementById('pzPalUni'), sg=document.getElementById('pzPalSign');
   dec.innerHTML=''; uni.innerHTML=''; sg.innerHTML='';
-  var maxTen=pzMaxTen(pzFam);
+  var maxTen=pzMaxTen(pzFam), maxUnit=pzMaxUnit(pzFam);
   for(let v=10; v<=maxTen; v+=10) dec.appendChild(pzMakeChip(String(v),'dec'));
-  for(let i=1;i<=9;i++) uni.appendChild(pzMakeChip(String(i),'uni'));
+  for(let i=1;i<=maxUnit;i++) uni.appendChild(pzMakeChip(String(i),'uni'));
   ['+','−','='].forEach(s=> sg.appendChild(pzMakeChip(s,'sign')) );
   document.getElementById('pzDecWrap').style.display = maxTen>=10 ? '' : 'none';
 }
@@ -948,7 +949,9 @@ function pzRestaPair(N){
 function pzHasResta(T){ for(const a of VALUES) for(const b of VALUES){ if(a!==b && a-b===T) return true; } return false; }
 
 function pzNew(){
-  var lo=Math.max(2,pzFam.min), hi=Math.max(lo,pzFam.max);
+  var lo=Math.max(2,pzFam.min);
+  var hi = pzFam.max<10 ? (pzFam.max-1) : pzFam.max;  // familias de 1 cifra: no pedir el mayor
+  hi=Math.max(lo,hi);
   pzTarget = lo + Math.floor(Math.random()*(hi-lo+1));
   document.getElementById('pzTarget').textContent=pzTarget;
   document.getElementById('pzSumEnd').textContent='= '+pzTarget;
