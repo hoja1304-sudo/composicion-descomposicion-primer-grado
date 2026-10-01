@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Máquina de números · Composición y descomposición</title>
+<style>
+  :root{
+    --bg1:#eaf6ff; --bg2:#d7ecff;
+    --ink:#173a5e; --soft:#5b7fa6;
+    --card:#ffffff;
+    --dec:#2ec07a; --dec-d:#12915a;      /* decenas (verde) */
+    --uni:#ffb020; --uni-d:#c67a00;      /* unidades (naranja) */
+    --accent:#3f7bd6; --accent-d:#2b5fae;
+    --good:#2f9e4a; --bad:#e8583f;
+    --u:clamp(15px, 4.4vw, 26px);        /* tamaño de un cubito */
+    --radius:18px;
+    --shadow:0 10px 26px rgba(23,58,94,.16);
+    --glow:#ffffff; --panel:#f4f9ff; --panel-bd:#e2eefc; --hint-bg:rgba(255,255,255,.6);
+    font-size:clamp(15px,2.4vw,19px);
+  }
+  :root[data-theme="dark"]{
+    --bg1:#0e1b2c; --bg2:#0a1524;
+    --ink:#e6eef8; --soft:#9db4ce;
+    --card:#182a41;
+    --accent:#5b9bf0; --accent-d:#3f7bd6;
+    --shadow:0 10px 26px rgba(0,0,0,.45);
+    --glow:rgba(120,160,220,.10); --panel:#20344f; --panel-bd:#2c456a; --hint-bg:rgba(255,255,255,.06);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%}
+  body{
+    font-family:'Trebuchet MS','Segoe UI',system-ui,sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(1200px 600px at 15% -10%, var(--glow) 0%, transparent 60%),
+      linear-gradient(160deg,var(--bg1),var(--bg2));
+    min-height:100%;
+    display:flex;flex-direction:column;align-items:center;
+    padding:clamp(10px,2.5vw,22px);
+    overflow-x:hidden;
+  }
+  .wrap{width:100%;max-width:960px;margin:auto}
+
+  /* ---------- Encabezado ---------- */
+  h1{font-size:clamp(1.5rem,5.4vw,2.5rem);margin:.1em 0 .1em;text-align:center;line-height:1.05}
+  .subtitle{text-align:center;color:var(--soft);margin:0 0 .3em;font-size:clamp(.85rem,3vw,1.05rem)}
+  .author{
+    text-align:center;color:#7a97b8;font-family:Georgia,'Times New Roman',serif;
+    font-size:clamp(.72rem,2.4vw,.88rem);line-height:1.35;margin:.4em 0 1.1em;font-style:italic;
+  }
+  .author b{font-weight:700;font-style:normal;color:#5b7fa6}
+
+  /* ---------- Botones ---------- */
+  button{font-family:inherit;cursor:pointer;border:none;border-radius:14px;font-weight:700}
+  button:focus-visible{outline:3px solid #ffd24d;outline-offset:2px}
+  .menu{display:flex;gap:clamp(12px,3vw,22px);flex-wrap:wrap;justify-content:center;margin-top:.4em}
+  .menu-btn{
+    flex:1 1 260px;max-width:380px;min-height:150px;
+    background:var(--card);color:var(--ink);
+    border-radius:var(--radius);box-shadow:var(--shadow);
+    padding:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.35em;
+    transition:transform .12s ease, box-shadow .12s ease;font-size:1.05rem;
+    border:3px solid transparent;
+  }
+  .menu-btn:hover,.menu-btn:active{transform:translateY(-4px);box-shadow:0 16px 34px rgba(23,58,94,.24)}
+  .menu-btn .ic{font-size:2.6rem;line-height:1}
+  .menu-btn small{font-weight:600;color:var(--soft);font-size:.82rem;text-align:center;line-height:1.25}
+  .menu-btn.b-desc{border-color:#bfe9d3}
+  .menu-btn.b-lab{border-color:#cfe0ff}
+
+  .hint{
+    text-align:center;color:var(--soft);margin:1.2em auto 0;max-width:640px;
+    font-size:.9rem;background:var(--hint-bg);padding:.7em 1em;border-radius:14px;
+  }
+
+  /* ---------- Pantallas ---------- */
+  .screen{display:none;animation:fade .35s ease}
+  .screen.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  .topbar{display:flex;align-items:center;gap:10px;margin-bottom:.6em;flex-wrap:wrap}
+  .topbar h2{margin:0;font-size:clamp(1.05rem,4vw,1.6rem);flex:1;min-width:0}
+  .icon-btn{
+    background:var(--card);color:var(--ink);box-shadow:var(--shadow);
+    min-width:44px;min-height:44px;border-radius:12px;font-size:1.2rem;padding:0 12px;
+    display:inline-flex;align-items:center;gap:.35em;
+  }
+  .icon-btn.primary{background:var(--accent);color:#fff}
+  .icon-btn.primary:hover{background:var(--accent-d)}
+  .pill{background:#fff;border-radius:999px;box-shadow:var(--shadow);padding:.35em .9em;font-weight:700;color:var(--ink);white-space:nowrap}
+  .pill.fam{background:#eef5ff;color:var(--accent-d)}
+
+  .card{
+    background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+    padding:clamp(14px,3.4vw,26px);margin-bottom:16px;
+  }
+
+  /* ---------- Selección de familia ---------- */
+  .fam-intro{text-align:center;color:var(--soft);margin:.2em 0 1em}
+  .fam-dest{font-weight:800;color:var(--accent-d)}
+  .fam-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:clamp(10px,2.6vw,16px)}
+  .fam-btn{
+    background:var(--card);box-shadow:var(--shadow);color:var(--ink);
+    min-height:78px;border-radius:16px;border:3px solid #cfe0ff;font-size:1.15rem;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15em;
+    transition:transform .1s ease;
+  }
+  .fam-btn:hover,.fam-btn:active{transform:translateY(-3px)}
+  .fam-btn b{font-size:1.35rem;color:var(--accent-d)}
+  .fam-btn small{color:var(--soft);font-weight:600;font-size:.75rem}
+  .fam-btn.wide{border-color:#ffd9a6;grid-column:span 1}
+
+  /* ---------- Máquina ---------- */
+  .machine{display:flex;justify-content:center;margin-bottom:.2em}
+  .machine svg{width:clamp(96px,26vw,150px);height:auto}
+
+  /* ---------- Bloques base 10 ---------- */
+  .blocks{display:flex;flex-wrap:wrap;align-items:flex-end;gap:clamp(6px,2vw,12px);
+          justify-content:center;min-height:calc(var(--u)*10 + 8px);padding:8px 0}
+  .group{display:flex;flex-wrap:wrap;align-items:flex-end;gap:6px;justify-content:center}
+  .rod{display:flex;flex-direction:column;width:var(--u);height:calc(var(--u)*10);
+       border:2px solid var(--dec-d);border-radius:5px;overflow:hidden;background:var(--dec);
+       box-shadow:0 3px 6px rgba(18,145,90,.25)}
+  .rod i{flex:1;border-bottom:1px solid rgba(255,255,255,.55)}
+  .rod i:last-child{border-bottom:none}
+  .unit{width:var(--u);height:var(--u);border:2px solid var(--uni-d);border-radius:5px;
+        background:var(--uni);box-shadow:0 3px 6px rgba(198,122,0,.28)}
+  .units-grid{display:grid;grid-template-columns:repeat(auto-fit,var(--u));gap:5px;
+              max-width:calc((var(--u) + 5px)*5);justify-content:center;align-content:end}
+  .pop{animation:pop .3s ease}
+  @keyframes pop{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.12)}100%{transform:scale(1);opacity:1}}
+
+  .rod i.gone,.unit.gone{position:relative;background:#e7ebf0;opacity:1}
+  .unit.gone{border-color:#c3ccd6;box-shadow:none}
+  .unit.gone::after,.rod i.gone::after{
+    content:"";position:absolute;inset:14%;
+    background:
+      linear-gradient(45deg,transparent 41%,var(--bad) 41%,var(--bad) 59%,transparent 59%),
+      linear-gradient(-45deg,transparent 41%,var(--bad) 41%,var(--bad) 59%,transparent 59%);
+  }
+
+  .legend{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:.4em;color:var(--soft);font-size:.85rem}
+  .legend span{display:inline-flex;align-items:center;gap:.4em}
+  .swatch{width:16px;height:16px;border-radius:4px;display:inline-block}
+  .sw-dec{background:var(--dec);border:2px solid var(--dec-d)}
+  .sw-uni{background:var(--uni);border:2px solid var(--uni-d)}
+
+  .expr{font-size:clamp(1.6rem,7vw,2.8rem);text-align:center;font-weight:800;letter-spacing:.5px;margin:.2em 0}
+  .expr .num{color:var(--accent)}
+  .expr .d{color:var(--dec-d)}
+  .expr .u{color:var(--uni-d)}
+  .expr .op{color:var(--soft)}
+  .words{text-align:center;color:var(--soft);font-size:1rem;margin-top:-.2em}
+
+  .controls{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:.6em}
+  .btn-big{min-height:54px;padding:0 22px;font-size:1.05rem;border-radius:16px;color:#fff;background:var(--accent);box-shadow:var(--shadow)}
+  .btn-big:hover{background:var(--accent-d)}
+  .btn-big.ghost{background:#fff;color:var(--accent);border:2px solid #cfe0ff}
+  .btn-big.ghost:hover{background:#f2f7ff}
+  .btn-big.warn{background:#fff;color:#c67a00;border:2px solid #ffd9a6}
+
+  .feedback{text-align:center;min-height:1.5em;font-weight:800;font-size:1.05rem;margin-top:.4em}
+  .feedback.good{color:var(--good)}
+  .feedback.bad{color:var(--bad)}
+
+  .toast{
+    position:fixed;left:50%;top:16%;
+    transform:translateX(-50%) translateY(-10px);
+    background:var(--good);color:#fff;padding:.7em 1.3em;border-radius:16px;font-weight:800;
+    font-size:1.2rem;box-shadow:0 12px 30px rgba(0,0,0,.25);opacity:0;pointer-events:none;
+    transition:opacity .18s ease, transform .18s ease;z-index:50;display:flex;align-items:center;gap:.5em;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast.bad{background:var(--bad)}
+  .toast .mk{width:1.5em;height:1.5em;border-radius:50%;background:#fff;color:var(--good);
+             display:inline-flex;align-items:center;justify-content:center;font-size:.9em}
+  .toast.bad .mk{color:var(--bad)}
+
+  /* ---------- Steppers (laboratorio) ---------- */
+  .step-btn{width:52px;height:52px;border-radius:14px;font-size:1.7rem;color:#fff;line-height:1}
+  .step-btn.plus{background:var(--good)}
+  .step-btn.minus{background:#e28a3a}
+
+  /* ---------- Laboratorio ---------- */
+  .lab-pick{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;margin-bottom:.4em}
+  .lab-pick .val{font-size:clamp(2.4rem,10vw,3.6rem);font-weight:800;color:var(--accent);min-width:2.2em;text-align:center}
+  .slider{width:min(90%,420px);height:44px}
+  input[type=range]{accent-color:var(--accent)}
+  .lab-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:640px){.lab-cards{grid-template-columns:1fr}}
+  .lab-card{background:var(--panel);border:2px solid var(--panel-bd);border-radius:16px;padding:14px}
+  .lab-card h3{margin:.1em 0 .4em;text-align:center;font-size:1.15rem}
+  .lab-card.suma h3{color:var(--good)}
+  .lab-card.resta h3{color:#e28a3a}
+  .lab-card .expr{font-size:clamp(1.3rem,5.6vw,2rem);margin:.3em 0 .1em}
+
+  /* ---------- Juego de tortugas ---------- */
+  .jgoal{text-align:center;font-size:clamp(1rem,3.6vw,1.25rem);color:var(--ink);margin:.1em 0 .1em}
+  .jgoal b.op-suma{color:var(--good)} .jgoal b.op-resta{color:#e28a3a}
+  .eq{display:flex;align-items:center;justify-content:center;gap:clamp(6px,2.2vw,14px);flex-wrap:wrap;margin:.35em 0 .1em}
+  .slot{
+    width:clamp(58px,17vw,86px);height:clamp(58px,17vw,86px);border-radius:16px;
+    border:3px dashed #b9cde6;background:var(--panel);
+    font-size:clamp(1.6rem,7vw,2.6rem);font-weight:800;color:var(--accent);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .slot.filled{border-style:solid;border-color:var(--accent);background:#e8f1ff}
+  .slot.empty{color:#b9cde6}
+  .opbig{font-size:clamp(1.8rem,8vw,3rem);font-weight:800;color:var(--soft)}
+  .opbig.suma{color:var(--good)} .opbig.resta{color:#e28a3a}
+  .eqres{font-size:clamp(1.8rem,8vw,3rem);font-weight:800;color:var(--accent)}
+
+  .pond{
+    position:relative;width:100%;height:clamp(300px,50vh,440px);
+    background:
+      radial-gradient(circle at 30% 20%, #eafbea, transparent 40%),
+      linear-gradient(160deg,#dff3e0,#c7ecca);
+    border-radius:18px;overflow:hidden;border:3px solid #bfe3c2;margin-top:.4em;
+    touch-action:manipulation;
+  }
+  .turtle{
+    position:absolute;top:0;left:0;
+    width:clamp(52px,15vw,72px);height:auto;padding:0;background:none;border:none;
+    will-change:transform;cursor:pointer;line-height:0;
+  }
+  .turtle svg{width:100%;height:auto;display:block}
+  .turtle .tnum{
+    position:absolute;top:52%;left:47%;transform:translate(-50%,-50%);
+    font-weight:800;font-size:clamp(1rem,4.6vw,1.5rem);color:#fff;
+    text-shadow:0 1px 2px rgba(0,0,0,.4);pointer-events:none;line-height:1;
+  }
+  .turtle.tdec .shell{fill:var(--dec);stroke:var(--dec-d)}
+  .turtle.tdec .limb,.turtle.tdec .head,.turtle.tdec .tail{fill:#8fce9b;stroke:#5fae74}
+  .turtle.tdec .seg{stroke:var(--dec-d)}
+  .turtle.tuni .shell{fill:var(--uni);stroke:var(--uni-d)}
+  .turtle.tuni .limb,.turtle.tuni .head,.turtle.tuni .tail{fill:#f4cd8f;stroke:#d69a45}
+  .turtle.tuni .seg{stroke:var(--uni-d)}
+  .turtle .shell{stroke-width:2.5}
+  .turtle .limb,.turtle .head,.turtle .tail{stroke-width:1.6}
+  .turtle .seg{fill:none;stroke-width:1.4;opacity:.55}
+  .turtle .tsh{fill:#000;opacity:.10}
+  /* patas que se mueven (nado) */
+  .turtle .limb{transform-box:fill-box;transform-origin:center;animation:paddle .62s ease-in-out infinite}
+  .turtle .lf,.turtle .rb{animation-delay:0s}
+  .turtle .rf,.turtle .lb{animation-delay:.31s}
+  @keyframes paddle{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-1.6px,1.4px) scale(.8)}}
+  .pond.still .limb{animation-play-state:paused}
+  @media (prefers-reduced-motion: reduce){ .turtle .limb{animation:none} }
+  .turtle:active{transform:scale(.92)}
+  .turtle.picked svg{animation:tb .35s ease}
+  @keyframes tb{0%,100%{transform:translateY(0)}40%{transform:translateY(-9px) scale(1.08)}}
+
+  .menu-btn.b-piz{border-color:#ffe0b0}
+
+  /* ---------- Pizarra ---------- */
+  .pz-head{text-align:center;margin:.1em 0 .5em}
+  .pz-num{font-size:clamp(2.4rem,11vw,3.6rem);font-weight:800;color:var(--accent);line-height:1}
+  .pz-msg{color:var(--soft);margin:.1em 0 .2em;text-align:center}
+  .pz-pal{background:var(--panel);border:2px solid var(--panel-bd);border-radius:16px;padding:10px 12px;margin-bottom:14px}
+  .pz-pal h4{margin:.5em 0 .3em;font-size:.82rem;color:var(--soft);text-transform:uppercase;letter-spacing:.5px}
+  .pz-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+  .chip{
+    display:inline-flex;align-items:center;justify-content:center;
+    min-width:48px;height:54px;padding:0 10px;border-radius:12px;font-size:1.5rem;font-weight:800;
+    border:2px solid transparent;box-shadow:var(--shadow);cursor:pointer;user-select:none;line-height:1;
+    transition:transform .08s ease;
+  }
+  .chip:active{transform:scale(.9)}
+  .chip.dec{background:var(--dec);border-color:var(--dec-d);color:#fff}
+  .chip.uni{background:var(--uni);border-color:var(--uni-d);color:#fff}
+  .chip.sign{background:var(--card);border-color:var(--accent);color:var(--accent);min-width:46px;height:50px;font-size:1.4rem}
+  .chip.placed{animation:pop .25s ease}
+
+  .pz-areas{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:640px){.pz-areas{grid-template-columns:1fr}}
+  .pz-area{border:2px dashed var(--panel-bd);background:var(--panel);border-radius:16px;padding:12px}
+  .pz-area.active{border-style:solid;border-color:var(--accent);box-shadow:0 0 0 3px rgba(63,123,214,.22)}
+  .pz-area.drop{border-color:var(--good);border-style:solid}
+  .pz-area h3{margin:.1em 0 .5em;text-align:center;font-size:1.05rem}
+  .pz-area.suma h3{color:var(--good)} .pz-area.resta h3{color:#e28a3a}
+  .pz-build{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .pz-zone{display:flex;flex-wrap:wrap;gap:8px;align-items:center;min-height:58px;flex:1;
+           border-radius:10px;padding:4px}
+  .pz-zone:empty::before{content:"Toca fichas aquí…";color:#9fb4cc;font-size:.9rem;font-weight:600}
+  .pz-end{font-size:1.5rem;font-weight:800;color:var(--accent);white-space:nowrap}
+  .pz-fb{min-height:1.4em;font-weight:700;font-size:.95rem;margin-top:.5em;text-align:center}
+  .pz-fb.ok{color:var(--good)} .pz-fb.bad{color:var(--bad)}
+
+  .pz-controls{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+
+  .celebrate{
+    position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+    background:rgba(10,20,35,.5);opacity:0;pointer-events:none;transition:opacity .2s ease;z-index:70;
+  }
+  .celebrate.show{opacity:1;pointer-events:auto}
+  #fwCanvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .cel-txt{position:relative;z-index:2;font-size:clamp(1.6rem,7vw,2.6rem);font-weight:800;color:#fff;
+           text-shadow:0 2px 14px rgba(0,0,0,.6);animation:celpop .5s ease;text-align:center;pointer-events:none}
+  .cel-hint{position:absolute;bottom:8%;left:0;right:0;text-align:center;color:#eaf2ff;font-weight:700;
+            font-size:.95rem;opacity:.85;z-index:2;pointer-events:none}
+  @keyframes celpop{0%{transform:scale(.3) rotate(-10deg);opacity:0}60%{transform:scale(1.18)}100%{transform:scale(1);opacity:1}}
+
+  .foot{color:#8aa6c4;font-size:.78rem;text-align:center;margin-top:auto;padding-top:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===================== PORTADA ===================== -->
+  <section id="home" class="screen active">
+    <div style="display:flex;justify-content:flex-end"><button class="icon-btn theme-toggle" onclick="toggleTheme()" aria-label="Cambiar a tema oscuro">🌙</button></div>
+    <h1>🤖 La máquina de números</h1>
+    <p class="subtitle">Composición y descomposición · Primer grado</p>
+    <p class="author"><b>Elaborado por: Alberto Jiménez Ruiz</b><br>Asesor Regional de Matemática · DRE Cartago · DAP 2026</p>
+
+    <div class="menu">
+      <button class="menu-btn b-lab" onclick="openFamilia('lab')">
+        <span class="ic">🧪</span>
+        <span>Laboratorio</span>
+        <small>Explora un número con suma y con resta:<br>32 = 30 + 2  y  32 = 40 − 8</small>
+      </button>
+      <button class="menu-btn b-desc" onclick="openFamilia('juego')">
+        <span class="ic">🐢</span>
+        <span>Juego</span>
+        <small>Atrapa tortugas y forma el número<br>sumando y restando</small>
+      </button>
+      <button class="menu-btn b-piz" onclick="go('pizarra')">
+        <span class="ic">📝</span>
+        <span>Pizarra</span>
+        <small>Arrastra o toca fichas para descomponer<br>con suma y con resta</small>
+      </button>
+    </div>
+
+    <p class="hint">💡 Los <b style="color:var(--dec-d)">bloques y tortugas verdes</b> son <b>decenas</b> (10) y los <b style="color:var(--uni-d)">naranjas</b> son <b>unidades</b> (1).</p>
+  </section>
+
+  <!-- ===================== SELECCIÓN DE FAMILIA ===================== -->
+  <section id="familia" class="screen">
+    <div class="topbar">
+      <button class="icon-btn" onclick="go('home')" aria-label="Inicio">🏠</button>
+      <h2>Elige la familia de números</h2>
+      <button class="icon-btn theme-toggle" onclick="toggleTheme()" aria-label="Cambiar a tema oscuro">🌙</button>
+    </div>
+    <div class="card">
+      <p class="fam-intro">Vas a jugar con la sección <span class="fam-dest" id="famDest">—</span>.<br>¿Con qué familia de números quieres trabajar?</p>
+      <div class="fam-grid" id="famGrid"></div>
+    </div>
+  </section>
+
+  <!-- ===================== LABORATORIO ===================== -->
+  <section id="lab" class="screen">
+    <div class="topbar">
+      <button class="icon-btn" onclick="go('home')" aria-label="Inicio">🏠</button>
+      <h2>Laboratorio de bloques</h2>
+      <span class="pill fam" id="labFam">Familia</span>
+      <button class="icon-btn" onclick="openFamilia('lab')" aria-label="Cambiar familia">🔀</button>
+      <button class="icon-btn theme-toggle" onclick="toggleTheme()" aria-label="Cambiar a tema oscuro">🌙</button>
+      <button class="icon-btn" id="labHear" aria-label="Escuchar">🔊</button>
+    </div>
+
+    <div class="card">
+      <p style="text-align:center;color:var(--soft);margin:.1em 0 .5em">
+        Elige un número y míralo de dos formas: <b style="color:var(--good)">sumando</b> y <b style="color:#e28a3a">restando</b>.
+      </p>
+      <div class="lab-pick">
+        <button class="step-btn minus" onclick="labStep(-1)" aria-label="Bajar">−</button>
+        <span class="val" id="labVal">10</span>
+        <button class="step-btn plus" onclick="labStep(1)" aria-label="Subir">+</button>
+      </div>
+      <div style="text-align:center"><input class="slider" type="range" id="labSlider" min="10" max="20" value="10" aria-label="Elegir número"></div>
+
+      <div class="lab-cards" style="margin-top:14px">
+        <div class="lab-card suma">
+          <h3>➕ Con suma</h3>
+          <div class="expr" id="labSumExpr"></div>
+          <div class="blocks" id="labSumBlocks"></div>
+        </div>
+        <div class="lab-card resta">
+          <h3>➖ Con resta</h3>
+          <div class="expr" id="labSubExpr"></div>
+          <div class="blocks" id="labSubBlocks"></div>
+        </div>
+      </div>
+
+      <div class="legend">
+        <span><i class="swatch sw-dec"></i> decena = 10</span>
+        <span><i class="swatch sw-uni"></i> unidad = 1</span>
+        <span><i class="swatch" style="background:#fff;border:2px solid var(--bad)"></i> se quita (resta)</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== JUEGO DE TORTUGAS ===================== -->
+  <section id="juego" class="screen">
+    <div class="topbar">
+      <button class="icon-btn" onclick="go('home')" aria-label="Inicio">🏠</button>
+      <h2>Tortugas de los números</h2>
+      <span class="pill">⭐ <span id="jScore">0</span></span>
+      <span class="pill fam" id="jFam">Familia</span>
+      <button class="icon-btn" onclick="openFamilia('juego')" aria-label="Cambiar familia">🔀</button>
+      <button class="icon-btn theme-toggle" onclick="toggleTheme()" aria-label="Cambiar a tema oscuro">🌙</button>
+      <button class="icon-btn" id="jHear" aria-label="Escuchar">🔊</button>
+    </div>
+
+    <div class="card">
+      <p class="jgoal" id="jGoal">Determina dos números que <b class="op-suma">sumados</b> den:</p>
+      <div class="eq">
+        <button class="slot empty" id="slot0" onclick="clearSlot(0)">?</button>
+        <span class="opbig suma" id="jOp">+</span>
+        <button class="slot empty" id="slot1" onclick="clearSlot(1)">?</button>
+        <span class="opbig">=</span>
+        <span class="eqres" id="jTarget">18</span>
+      </div>
+      <div class="feedback" id="jFeedback">&nbsp;</div>
+
+      <div class="pond" id="pond"></div>
+
+      <div class="legend">
+        <span><i class="swatch sw-dec"></i> tortuga verde = decena (10 a 90)</span>
+        <span><i class="swatch sw-uni"></i> tortuga naranja = unidad (1 a 9)</span>
+      </div>
+
+      <div class="controls">
+        <button class="btn-big" id="jPause" onclick="jTogglePause()">⏸️ Quietas</button>
+        <button class="btn-big ghost" onclick="jClear()">🧹 Borrar</button>
+        <button class="btn-big warn" onclick="jHelp()">💡 Ayuda</button>
+        <button class="btn-big ghost" onclick="jNewRound()">🔄 Otro número</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== PIZARRA ===================== -->
+  <section id="pizarra" class="screen">
+    <div class="topbar">
+      <button class="icon-btn" onclick="go('home')" aria-label="Inicio">🏠</button>
+      <h2>Pizarra</h2>
+      <button class="icon-btn theme-toggle" onclick="toggleTheme()" aria-label="Cambiar a tema oscuro">🌙</button>
+      <button class="icon-btn" id="pzHear" aria-label="Escuchar">🔊</button>
+    </div>
+
+    <div class="card">
+      <div class="pz-head">
+        <p class="pz-msg" id="pzMsg">Descompón el número:</p>
+        <div class="pz-num" id="pzTarget">—</div>
+      </div>
+
+      <div class="pz-pal">
+        <h4>Decenas</h4>
+        <div class="pz-row" id="pzPalDec"></div>
+        <h4>Unidades</h4>
+        <div class="pz-row" id="pzPalUni"></div>
+        <h4>Signos</h4>
+        <div class="pz-row" id="pzPalSign"></div>
+      </div>
+
+      <div class="pz-areas">
+        <div class="pz-area suma active" id="pzAreaSuma" onclick="pzSetActive('suma')">
+          <h3>➕ Descomponer como suma</h3>
+          <div class="pz-build">
+            <div class="pz-zone" id="pzZoneSuma"></div>
+            <span class="pz-end" id="pzSumEnd">= —</span>
+          </div>
+          <div class="pz-fb" id="pzFbSuma">&nbsp;</div>
+        </div>
+        <div class="pz-area resta" id="pzAreaResta" onclick="pzSetActive('resta')">
+          <h3>➖ Descomponer como resta</h3>
+          <div class="pz-build">
+            <div class="pz-zone" id="pzZoneResta"></div>
+            <span class="pz-end" id="pzSubEnd">= —</span>
+          </div>
+          <div class="pz-fb" id="pzFbResta">&nbsp;</div>
+        </div>
+      </div>
+
+      <div class="pz-controls">
+        <button class="btn-big" onclick="pzCheck()">✔️ Comprobar</button>
+        <button class="btn-big ghost" onclick="pzClearActive()">🧹 Borrar</button>
+        <button class="btn-big warn" onclick="pzNew()">🔄 Otro ítem</button>
+      </div>
+    </div>
+  </section>
+
+  <p class="foot">Máquina de números · uso educativo · funciona sin conexión</p>
+</div>
+
+<div class="toast" id="toast"><span class="mk">✓</span><span id="toastTxt">¡Correcto!</span></div>
+<div class="celebrate" id="celebrate">
+  <canvas id="fwCanvas"></canvas>
+  <div class="cel-txt">¡Muy bien! 🎉</div>
+  <div class="cel-hint">✨ Toca la pantalla para más fuegos ✨</div>
+</div>
+
+<script>
+/* ============ Navegación ============ */
+function go(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+  stopSpeak();
+  if(id!=='juego') stopAnim();
+  if(id==='pizarra' && pzTarget===null) pzNew();
+}
+
+/* ============ Tema claro / oscuro ============ */
+let dark=false;
+function applyTheme(){
+  document.documentElement.setAttribute('data-theme', dark?'dark':'light');
+  document.querySelectorAll('.theme-toggle').forEach(b=>{
+    b.textContent = dark?'☀️':'🌙';
+    b.setAttribute('aria-label', dark?'Cambiar a tema claro':'Cambiar a tema oscuro');
+  });
+}
+function toggleTheme(){ dark=!dark; try{localStorage.setItem('mn-theme',dark?'dark':'light');}catch(e){} applyTheme(); }
+(function(){ try{var s=localStorage.getItem('mn-theme'); if(s) dark=(s==='dark');}catch(e){} applyTheme(); })();
+
+/* ============ Familias ============ */
+const FAMILIES=[
+  [10,20],[20,30],[30,40],[40,50],[50,60],[10,50],[60,70],[80,90],[90,99],[10,99]
+];
+let family={min:10,max:20,label:'De 10 a 20'};
+let pendingDest='juego';
+
+(function buildFamGrid(){
+  const g=document.getElementById('famGrid');
+  FAMILIES.forEach(([a,b])=>{
+    const wide = (b-a)>=40;
+    const btn=document.createElement('button');
+    btn.className='fam-btn'+(wide?' wide':'');
+    btn.innerHTML=`<b>${a} – ${b}</b><small>De ${a} a ${b}</small>`;
+    btn.onclick=()=>chooseFamily(a,b);
+    g.appendChild(btn);
+  });
+})();
+
+function openFamilia(dest){
+  pendingDest=dest;
+  document.getElementById('famDest').textContent = dest==='lab' ? 'Laboratorio 🧪' : 'Juego 🐢';
+  go('familia');
+}
+function chooseFamily(a,b){
+  family={min:a,max:b,label:'De '+a+' a '+b};
+  if(pendingDest==='lab'){
+    document.getElementById('labFam').textContent=family.label;
+    const s=document.getElementById('labSlider');
+    s.min=a; s.max=b;
+    labSet(a);
+    go('lab');
+  }else{
+    document.getElementById('jFam').textContent=family.label;
+    buildTurtles();
+    jScore=0; document.getElementById('jScore').textContent=0;
+    jNewRound();
+    go('juego');
+    startAnim();
+  }
+}
+
+/* ============ Número a palabras (0-99) ============ */
+const UNI=['cero','uno','dos','tres','cuatro','cinco','seis','siete','ocho','nueve','diez',
+'once','doce','trece','catorce','quince','dieciséis','diecisiete','dieciocho','diecinueve'];
+const VEINTI=['veinte','veintiuno','veintidós','veintitrés','veinticuatro','veinticinco','veintiséis','veintisiete','veintiocho','veintinueve'];
+const DEC=['','','veinte','treinta','cuarenta','cincuenta','sesenta','setenta','ochenta','noventa'];
+function words(n){
+  n=Math.round(n);
+  if(n<20) return UNI[n];
+  if(n<30) return VEINTI[n-20];
+  const d=Math.floor(n/10), u=n%10;
+  return u===0 ? DEC[d] : DEC[d]+' y '+UNI[u];
+}
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+
+/* ============ Bloques base 10 ============ */
+function drawBlocks(container, tens, ones, removeFromTop){
+  container.innerHTML='';
+  removeFromTop = removeFromTop||0;
+  const total = tens*10 + ones;
+  const goneStart = total - removeFromTop;
+  let idx=0;
+  const gRods=document.createElement('div'); gRods.className='group';
+  for(let t=0;t<tens;t++){
+    const rod=document.createElement('div'); rod.className='rod pop';
+    for(let i=0;i<10;i++){
+      const c=document.createElement('i');
+      if(idx>=goneStart) c.classList.add('gone');
+      rod.appendChild(c); idx++;
+    }
+    gRods.appendChild(rod);
+  }
+  if(tens>0) container.appendChild(gRods);
+  if(ones>0){
+    const gUnits=document.createElement('div'); gUnits.className='units-grid';
+    for(let u=0;u<ones;u++){
+      const c=document.createElement('div'); c.className='unit pop';
+      if(idx>=goneStart) c.classList.add('gone');
+      gUnits.appendChild(c); idx++;
+    }
+    container.appendChild(gUnits);
+  }
+}
+
+/* ============ Voz (español latino) ============ */
+let voice=null, speaking=false;
+function pickVoice(){
+  const vs=speechSynthesis.getVoices();
+  if(!vs.length) return null;
+  const pref=['es-US','es-MX','es-419','es-CO','es-AR','es-CL','es-PE'];
+  for(const p of pref){ const v=vs.find(x=>x.lang&&x.lang.toLowerCase().startsWith(p.toLowerCase())); if(v) return v; }
+  let v=vs.find(x=>x.lang&&x.lang.toLowerCase().startsWith('es')&&!/es-es/i.test(x.lang));
+  return v||vs.find(x=>x.lang&&x.lang.toLowerCase().startsWith('es'))||null;
+}
+if('speechSynthesis' in window){ voice=pickVoice(); speechSynthesis.onvoiceschanged=()=>{voice=pickVoice();}; }
+function speak(text){
+  if(!('speechSynthesis' in window)) return;
+  stopSpeak();
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang=(voice&&voice.lang)||'es-MX'; if(voice)u.voice=voice;
+  u.rate=.96; u.pitch=1.05;
+  u.onend=()=>{speaking=false;}; u.onerror=()=>{speaking=false;};
+  speaking=true; speechSynthesis.speak(u);
+}
+function stopSpeak(){ if('speechSynthesis' in window){speechSynthesis.cancel();} speaking=false; }
+
+/* ============ Audio ============ */
+let AC=null;
+function tone(ok){
+  try{
+    AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    const o=AC.createOscillator(), g=AC.createGain();
+    o.connect(g); g.connect(AC.destination); o.type='sine';
+    const now=AC.currentTime;
+    if(ok){o.frequency.setValueAtTime(660,now);o.frequency.setValueAtTime(880,now+.12);}
+    else{o.frequency.setValueAtTime(300,now);o.frequency.setValueAtTime(220,now+.14);}
+    g.gain.setValueAtTime(.001,now); g.gain.exponentialRampToValueAtTime(.22,now+.02);
+    g.gain.exponentialRampToValueAtTime(.001,now+.32);
+    o.start(now); o.stop(now+.34);
+  }catch(e){}
+}
+function blip(){
+  try{
+    AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    const o=AC.createOscillator(), g=AC.createGain();
+    o.connect(g); g.connect(AC.destination); o.type='triangle';
+    const now=AC.currentTime; o.frequency.setValueAtTime(520,now);
+    g.gain.setValueAtTime(.001,now); g.gain.exponentialRampToValueAtTime(.15,now+.01);
+    g.gain.exponentialRampToValueAtTime(.001,now+.14);
+    o.start(now); o.stop(now+.15);
+  }catch(e){}
+}
+
+/* ============ Toast ============ */
+let toastT=null;
+function toast(ok,msg){
+  const t=document.getElementById('toast');
+  t.classList.toggle('bad',!ok);
+  t.querySelector('.mk').textContent = ok?'✓':'✕';
+  document.getElementById('toastTxt').textContent = msg||(ok?'¡Correcto!':'Incorrecto');
+  t.classList.add('show');
+  clearTimeout(toastT);
+  toastT=setTimeout(()=>t.classList.remove('show'), ok?1400:1150);
+}
+
+/* ============ LABORATORIO ============ */
+let labN=10;
+function labStep(delta){ labSet(labN+delta); }
+function labSet(n){
+  const lo=+document.getElementById('labSlider').min, hi=+document.getElementById('labSlider').max;
+  labN=Math.max(lo,Math.min(hi,Math.round(n)));
+  document.getElementById('labVal').textContent=labN;
+  document.getElementById('labSlider').value=labN;
+  labRender();
+}
+function labRender(){
+  const n=labN, d=Math.floor(n/10), u=n%10;
+  const sumExpr=document.getElementById('labSumExpr');
+  if(d>0 && u>0)      sumExpr.innerHTML=`<span class="num">${n}</span> <span class="op">=</span> <span class="d">${d*10}</span> <span class="op">+</span> <span class="u">${u}</span>`;
+  else if(d>0)        sumExpr.innerHTML=`<span class="num">${n}</span> <span class="op">=</span> <span class="d">${d*10}</span>`;
+  else                sumExpr.innerHTML=`<span class="num">${n}</span> <span class="op">=</span> <span class="u">${u}</span>`;
+  drawBlocks(document.getElementById('labSumBlocks'), d, u, 0);
+
+  const upper=(Math.floor(n/10)+1)*10, take=upper-n;
+  document.getElementById('labSubExpr').innerHTML=
+    `<span class="num">${n}</span> <span class="op">=</span> <span class="d">${upper}</span> <span class="op">−</span> <span style="color:var(--bad)">${take}</span>`;
+  drawBlocks(document.getElementById('labSubBlocks'), upper/10, 0, take);
+}
+document.getElementById('labSlider').addEventListener('input',e=>labSet(+e.target.value));
+document.getElementById('labHear').addEventListener('click',()=>{
+  if(speaking){stopSpeak();return;}
+  const n=labN, d=Math.floor(n/10), u=n%10;
+  const upper=(Math.floor(n/10)+1)*10, take=upper-n;
+  let txt=cap(words(n))+'. Con suma: '+words(n)+' es igual a ';
+  txt += (d>0&&u>0)? words(d*10)+' más '+words(u) : (d>0? words(d*10) : words(u));
+  txt += '. Con resta: '+words(n)+' es igual a '+words(upper)+' menos '+words(take)+'.';
+  speak(txt);
+});
+
+/* ============ JUEGO DE TORTUGAS ============ */
+const TURTLE_SVG=`
+<svg viewBox="0 0 72 58" xmlns="http://www.w3.org/2000/svg">
+  <ellipse class="tsh" cx="34" cy="51" rx="22" ry="4.5"/>
+  <ellipse class="limb lf" cx="15" cy="15" rx="7" ry="5"/>
+  <ellipse class="limb rf" cx="57" cy="15" rx="7" ry="5"/>
+  <ellipse class="limb lb" cx="15" cy="45" rx="7" ry="5"/>
+  <ellipse class="limb rb" cx="57" cy="45" rx="7" ry="5"/>
+  <path class="tail" d="M6 30 q-5 0 -6 -3 q6 -2 6 -2 z" transform="translate(2,0)"/>
+  <ellipse class="head" cx="64" cy="30" rx="8.5" ry="6.5"/>
+  <circle cx="67" cy="28" r="1.4" fill="#173a5e"/>
+  <ellipse class="shell" cx="34" cy="30" rx="26" ry="21"/>
+  <polygon class="seg" points="34,16 50,24 50,36 34,44 18,36 18,24"/>
+  <path class="seg" d="M34 30 L34 16 M34 30 L50 24 M34 30 L50 36 M34 30 L34 44 M34 30 L18 36 M34 30 L18 24"/>
+</svg>`;
+
+const VALUES=(function(){ const a=[]; for(let i=1;i<=9;i++)a.push(i); for(let i=1;i<=9;i++)a.push(i*10); return a; })();
+let TURT=[], slots=[null,null], target=18, phase='suma', jScore=0, jBusy=false;
+let rafId=null, paused=false, lastT=0;
+
+function buildTurtles(){
+  const pond=document.getElementById('pond'); pond.innerHTML=''; TURT=[];
+  const defs=[];
+  for(let i=1;i<=9;i++) defs.push({v:i,ten:false});
+  for(let i=1;i<=9;i++) defs.push({v:i*10,ten:true});
+  defs.forEach(o=>{
+    const b=document.createElement('button');
+    b.className='turtle '+(o.ten?'tdec':'tuni'); b.type='button';
+    b.setAttribute('aria-label','Tortuga con el número '+o.v);
+    b.innerHTML=TURTLE_SVG+'<span class="tnum">'+o.v+'</span>';
+    b.addEventListener('click',()=>pickTurtle(o.v,b));
+    pond.appendChild(b);
+    TURT.push({v:o.v,el:b,x:0,y:0,vx:0,vy:0});
+  });
+  placeTurtles();
+}
+function placeTurtles(){
+  const pond=document.getElementById('pond');
+  const W=pond.clientWidth||340, H=pond.clientHeight||360;
+  TURT.forEach(t=>{
+    const s=t.el.offsetWidth||60;
+    t.x=Math.random()*Math.max(1,W-s);
+    t.y=Math.random()*Math.max(1,H-s);
+    const ang=Math.random()*Math.PI*2, sp=12+Math.random()*14;
+    t.vx=Math.cos(ang)*sp; t.vy=Math.sin(ang)*sp;
+    t.el.style.transform=`translate(${t.x}px,${t.y}px)`;
+  });
+}
+function animTurtles(ts){
+  if(!lastT) lastT=ts;
+  const dt=Math.min(.05,(ts-lastT)/1000); lastT=ts;
+  if(!paused){
+    const pond=document.getElementById('pond');
+    const W=pond.clientWidth, H=pond.clientHeight;
+    TURT.forEach(t=>{
+      const s=t.el.offsetWidth||60;
+      t.x+=t.vx*dt; t.y+=t.vy*dt;
+      if(t.x<0){t.x=0;t.vx=Math.abs(t.vx);} if(t.x>W-s){t.x=W-s;t.vx=-Math.abs(t.vx);}
+      if(t.y<0){t.y=0;t.vy=Math.abs(t.vy);} if(t.y>H-s){t.y=H-s;t.vy=-Math.abs(t.vy);}
+      t.el.style.transform=`translate(${t.x}px,${t.y}px)`;
+    });
+  }
+  rafId=requestAnimationFrame(animTurtles);
+}
+function startAnim(){ if(rafId) return; lastT=0; if(TURT.length && TURT[0].x===0 && TURT[0].y===0) placeTurtles(); rafId=requestAnimationFrame(animTurtles); }
+function stopAnim(){ if(rafId){cancelAnimationFrame(rafId); rafId=null;} }
+function jTogglePause(){
+  paused=!paused;
+  document.getElementById('jPause').textContent = paused ? '▶️ Mover' : '⏸️ Quietas';
+  document.getElementById('pond').classList.toggle('still', paused);
+}
+
+function hasResta(T){ for(const a of VALUES) for(const b of VALUES){ if(a!==b && a-b===T) return true; } return false; }
+function restaPair(T){ for(const a of VALUES) for(const b of VALUES){ if(a!==b && a-b===T) return [a,b]; } return null; }
+function sumaPair(T){ const d=Math.floor(T/10)*10,u=T%10;
+  if(u>0 && d>=10) return [d,u];
+  // T múltiplo de 10 o d==0
+  for(const a of VALUES) for(const b of VALUES){ if(a+b===T) return [a,b]; }
+  return [Math.floor(T/2),T-Math.floor(T/2)];
+}
+
+function pickTarget(){
+  const lo=Math.max(10,family.min), hi=family.max;
+  return lo + Math.floor(Math.random()*(hi-lo+1));
+}
+function jNewRound(){
+  target=pickTarget();
+  phase='suma';
+  setupPhase();
+}
+function setupPhase(){
+  slots=[null,null]; jBusy=false;
+  document.getElementById('jTarget').textContent=target;
+  document.getElementById('jFeedback').textContent=' ';
+  document.getElementById('jFeedback').className='feedback';
+  const goal=document.getElementById('jGoal'), op=document.getElementById('jOp');
+  if(phase==='suma'){
+    goal.innerHTML='Determina dos números que <b class="op-suma">sumados</b> den:';
+    op.textContent='+'; op.className='opbig suma';
+    speak('Determina dos números que sumados den '+words(target)+'.');
+  }else{
+    goal.innerHTML='Ahora, dos números cuya <b class="op-resta">resta</b> dé:';
+    op.textContent='−'; op.className='opbig resta';
+    speak('Ahora, dos números cuya resta dé '+words(target)+'.');
+  }
+  renderSlots();
+}
+function renderSlots(){
+  for(let i=0;i<2;i++){
+    const el=document.getElementById('slot'+i);
+    if(slots[i]===null){ el.textContent='?'; el.className='slot empty'; }
+    else{ el.textContent=slots[i]; el.className='slot filled'; }
+  }
+}
+function pickTurtle(v,el){
+  if(jBusy) return;
+  const i = slots[0]===null ? 0 : (slots[1]===null ? 1 : -1);
+  if(i<0) return;
+  slots[i]=v; renderSlots(); blip();
+  if(el){ el.classList.remove('picked'); void el.offsetWidth; el.classList.add('picked'); }
+  if(slots[0]!==null && slots[1]!==null){ jBusy=true; setTimeout(jCheck,300); }
+}
+function clearSlot(i){ if(jBusy) return; if(slots[i]!==null){ slots[i]=null; renderSlots(); } }
+function jClear(){ if(jBusy) return; slots=[null,null]; renderSlots(); }
+
+function jCheck(){
+  const a=slots[0], b=slots[1];
+  const ok = phase==='suma' ? (a+b===target) : (a-b===target);
+  const fb=document.getElementById('jFeedback');
+  if(ok){
+    tone(true); toast(true,'¡Correcto!');
+    jScore++; document.getElementById('jScore').textContent=jScore;
+    const sign = phase==='suma' ? '+' : '−';
+    fb.textContent='¡Muy bien!  '+a+' '+sign+' '+b+' = '+target;
+    fb.className='feedback good';
+    speak(words(target)+' es igual a '+words(a)+(phase==='suma'?' más ':' menos ')+words(b)+'. ¡Excelente!');
+    setTimeout(()=>{
+      if(phase==='suma' && hasResta(target)){ phase='resta'; setupPhase(); }
+      else { jNewRound(); }
+    },1600);
+  }else{
+    tone(false); toast(false,'Incorrecto');
+    let msg='Prueba otra vez.';
+    if(phase==='resta' && (b-a===target)) msg='¡Casi! Pon el número mayor primero.';
+    else if(phase==='suma') msg = (a+b<target)?'Te quedaste corto.':'Te pasaste.';
+    fb.textContent=msg; fb.className='feedback bad';
+    setTimeout(()=>{ slots=[null,null]; renderSlots(); jBusy=false; },900);
+  }
+}
+function jHelp(){
+  const fb=document.getElementById('jFeedback');
+  let a,b;
+  if(phase==='suma'){ [a,b]=sumaPair(target);
+    fb.innerHTML='💡 Piensa en decenas y unidades: <b>'+target+' = '+a+' + '+b+'</b>';
+    speak('Una forma: '+words(target)+' es igual a '+words(a)+' más '+words(b)+'.');
+  }else{ const p=restaPair(target);
+    if(p){ [a,b]=p;
+      fb.innerHTML='💡 Toma la decena mayor y quita: <b>'+target+' = '+a+' − '+b+'</b>';
+      speak('Una forma: '+words(target)+' es igual a '+words(a)+' menos '+words(b)+'.');
+    }
+  }
+  fb.className='feedback';
+}
+document.getElementById('jHear').addEventListener('click',()=>{
+  if(speaking){stopSpeak();return;}
+  setupPhaseSpeakOnly();
+});
+function setupPhaseSpeakOnly(){
+  if(phase==='suma') speak('Determina dos números que sumados den '+words(target)+'.');
+  else speak('Dos números cuya resta dé '+words(target)+'.');
+}
+
+window.addEventListener('resize',()=>{ if(document.getElementById('juego').classList.contains('active')) placeTurtles(); });
+
+/* ============ PIZARRA ============ */
+let pzTarget=null, pzActive='suma';
+function pzBuildPalette(){
+  var dec=document.getElementById('pzPalDec'), uni=document.getElementById('pzPalUni'), sg=document.getElementById('pzPalSign');
+  dec.innerHTML=''; uni.innerHTML=''; sg.innerHTML='';
+  for(let i=1;i<=9;i++) dec.appendChild(pzMakeChip(String(i*10),'dec'));
+  for(let i=1;i<=9;i++) uni.appendChild(pzMakeChip(String(i),'uni'));
+  ['+','−','='].forEach(s=> sg.appendChild(pzMakeChip(s,'sign')) );
+}
+function pzMakeChip(val,kind){
+  var b=document.createElement('button'); b.type='button';
+  b.className='chip '+kind; b.textContent=val; b.dataset.val=val; b.dataset.kind=kind;
+  b.setAttribute('aria-label',(kind==='sign'?'Signo ':'Carta ')+val);
+  b.addEventListener('click',()=>pzAdd(pzActive,val,kind));
+  b.draggable=true;
+  b.addEventListener('dragstart',e=>{ e.dataTransfer.setData('text/plain', JSON.stringify({val:val,kind:kind})); e.dataTransfer.effectAllowed='copy'; });
+  return b;
+}
+function pzSetActive(which){
+  pzActive=which;
+  document.getElementById('pzAreaSuma').classList.toggle('active', which==='suma');
+  document.getElementById('pzAreaResta').classList.toggle('active', which==='resta');
+}
+function pzAdd(which,val,kind){
+  var zone=document.getElementById(which==='suma'?'pzZoneSuma':'pzZoneResta');
+  var b=document.createElement('button'); b.type='button';
+  b.className='chip '+kind+' placed'; b.textContent=val; b.dataset.val=val; b.dataset.kind=kind;
+  b.title='Tocar para quitar'; b.setAttribute('aria-label','Quitar '+val);
+  b.addEventListener('click',ev=>{ ev.stopPropagation(); b.remove(); });
+  zone.appendChild(b); blip();
+  pzSetActive(which);
+}
+function pzClear(which){ document.getElementById(which==='suma'?'pzZoneSuma':'pzZoneResta').innerHTML=''; }
+function pzClearActive(){ pzClear(pzActive); pzFb(pzActive,'',''); }
+function pzFb(which,state,text){
+  var el=document.getElementById(which==='suma'?'pzFbSuma':'pzFbResta');
+  el.textContent=text||' '; el.className='pz-fb'+(state?' '+state:'');
+}
+function pzSumaPair(N){ var u=N%10; if(u===0) return [N-10,10]; return [Math.floor(N/10)*10,u]; }
+function pzRestaPair(N){ var up=(Math.floor(N/10)+1)*10; return [up, up-N]; }
+
+function pzNew(){
+  pzTarget = 11 + Math.floor(Math.random()*79); // 11..89 (siempre tiene suma y resta con las cartas)
+  document.getElementById('pzTarget').textContent=pzTarget;
+  document.getElementById('pzSumEnd').textContent='= '+pzTarget;
+  document.getElementById('pzSubEnd').textContent='= '+pzTarget;
+  pzClear('suma'); pzClear('resta');
+  pzFb('suma','',''); pzFb('resta','','');
+  document.getElementById('pzMsg').textContent='Descompón el número:';
+  pzSetActive('suma');
+  speak('Descompón el número '+words(pzTarget)+'. Una forma con suma y otra con resta.');
+}
+function pzEval(which){
+  var zone=document.getElementById(which==='suma'?'pzZoneSuma':'pzZoneResta');
+  var toks=[...zone.children].map(c=>({val:c.dataset.val,kind:c.dataset.kind}));
+  var expr=[]; for(const t of toks){ if(t.val==='=') break; expr.push(t); }
+  if(expr.length===0) return {valid:false,empty:true};
+  let result=null, op='+', hasPlus=false, hasMinus=false, nums=0, valid=true, expectNum=true;
+  for(const t of expr){
+    if(t.kind==='sign'){
+      if(expectNum){valid=false;break;}
+      op=t.val; if(op==='+')hasPlus=true; if(op==='−'||op==='-')hasMinus=true; expectNum=true;
+    }else{
+      var n=parseInt(t.val,10); nums++;
+      if(result===null) result=n; else result = (op==='+')? result+n : result-n;
+      expectNum=false;
+    }
+  }
+  if(expectNum) valid=false;
+  return {valid:valid, value:result, hasPlus:hasPlus, hasMinus:hasMinus, nums:nums};
+}
+function pzCheck(){
+  var s=pzEval('suma'), r=pzEval('resta');
+  var sumaGood = s.valid && s.value===pzTarget && s.hasPlus && !s.hasMinus && s.nums>=2;
+  var restaGood = r.valid && r.value===pzTarget && r.hasMinus && r.nums>=2;
+
+  if(sumaGood) pzFb('suma','ok','✓ ¡Correcto!');
+  else { var sp=pzSumaPair(pzTarget); pzFb('suma','bad','✗ Prueba: '+sp[0]+' + '+sp[1]); }
+  if(restaGood) pzFb('resta','ok','✓ ¡Correcto!');
+  else { var rp=pzRestaPair(pzTarget); pzFb('resta','bad','✗ Prueba: '+rp[0]+' − '+rp[1]); }
+
+  if(sumaGood && restaGood){
+    tone(true); pzCelebrate();
+    speak('¡Excelente! Descompusiste '+words(pzTarget)+' con suma y con resta. ¡Muy bien!');
+  }else{
+    tone(false);
+  }
+}
+/* ---- Fuegos artificiales animados ---- */
+let celT=null, fwCanvas=null, fwCtx=null, fwParticles=[], fwRAF=null, fwInt=null, fwEnd=0;
+function fwResize(){ if(!fwCanvas)return; fwCanvas.width=window.innerWidth; fwCanvas.height=window.innerHeight; }
+function fwBurst(x,y){
+  var hue=Math.floor(Math.random()*360), n=38+Math.floor(Math.random()*18);
+  for(let i=0;i<n;i++){
+    var a=(Math.PI*2*i)/n + Math.random()*0.12, sp=2+Math.random()*4.2;
+    fwParticles.push({x:x,y:y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,hue:hue+Math.random()*40,size:2+Math.random()*2.2});
+  }
+}
+function fwLaunchRandom(){
+  if(!fwCanvas)return;
+  fwBurst(fwCanvas.width*(0.18+Math.random()*0.64), fwCanvas.height*(0.18+Math.random()*0.42));
+}
+function fwLoop(){
+  if(!fwCtx)return;
+  fwCtx.clearRect(0,0,fwCanvas.width,fwCanvas.height);
+  for(let p of fwParticles){
+    p.vy+=0.045; p.vx*=0.99; p.vy*=0.99; p.x+=p.vx; p.y+=p.vy; p.life-=0.012;
+    if(p.life>0){
+      fwCtx.globalAlpha=Math.max(0,p.life);
+      fwCtx.fillStyle='hsl('+(p.hue%360)+',90%,62%)';
+      fwCtx.beginPath(); fwCtx.arc(p.x,p.y,p.size,0,Math.PI*2); fwCtx.fill();
+    }
+  }
+  fwParticles=fwParticles.filter(p=>p.life>0);
+  fwCtx.globalAlpha=1;
+  if(performance.now()<fwEnd || fwParticles.length){ fwRAF=requestAnimationFrame(fwLoop); }
+  else { fwRAF=null; }
+}
+function fwStart(){
+  fwCanvas=document.getElementById('fwCanvas'); fwCtx=fwCanvas.getContext('2d');
+  fwResize(); fwParticles=[]; fwEnd=performance.now()+2200;
+  fwLaunchRandom(); fwLaunchRandom();
+  clearInterval(fwInt); fwInt=setInterval(()=>{ if(performance.now()<fwEnd) fwLaunchRandom(); }, 430);
+  if(!fwRAF) fwRAF=requestAnimationFrame(fwLoop);
+}
+function fwStop(){
+  clearInterval(fwInt);
+  if(fwRAF){ cancelAnimationFrame(fwRAF); fwRAF=null; }
+  if(fwCtx) fwCtx.clearRect(0,0,fwCanvas.width,fwCanvas.height);
+  fwParticles=[];
+}
+function pzCelebrate(){
+  var c=document.getElementById('celebrate'); c.classList.add('show');
+  fwStart();
+  clearTimeout(celT); celT=setTimeout(()=>{ c.classList.remove('show'); fwStop(); }, 3000);
+}
+(function(){
+  var c=document.getElementById('celebrate');
+  if(c){ c.addEventListener('pointerdown',function(e){ if(fwCanvas) fwBurst(e.clientX,e.clientY); }); }
+  window.addEventListener('resize',fwResize);
+})();
+/* arrastrar (mouse) hacia las zonas */
+['Suma','Resta'].forEach(function(w){
+  var area=document.getElementById('pzArea'+w); var which=w.toLowerCase();
+  area.addEventListener('dragover',e=>{ e.preventDefault(); area.classList.add('drop'); });
+  area.addEventListener('dragleave',()=>area.classList.remove('drop'));
+  area.addEventListener('drop',e=>{
+    e.preventDefault(); area.classList.remove('drop');
+    try{ var d=JSON.parse(e.dataTransfer.getData('text/plain')); pzAdd(which,d.val,d.kind); }catch(err){}
+  });
+});
+document.getElementById('pzHear').addEventListener('click',()=>{
+  if(speaking){stopSpeak();return;}
+  speak('Descompón el número '+words(pzTarget)+'. Una forma con suma y otra con resta.');
+});
+pzBuildPalette();
+
+/* Init laboratorio por si acaso */
+labRender();
+</script>
+</body>
+</html>
