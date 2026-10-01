@@ -68,6 +68,7 @@
   .menu-btn small{font-weight:600;color:var(--soft);font-size:.82rem;text-align:center;line-height:1.25}
   .menu-btn.b-desc{border-color:#bfe9d3}
   .menu-btn.b-lab{border-color:#cfe0ff}
+  .menu-btn.b-prac{border-color:#ffd9b0}
 
   .hint{
     text-align:center;color:var(--soft);margin:1.2em auto 0;max-width:640px;
@@ -320,6 +321,38 @@
             font-size:.95rem;opacity:.85;z-index:2;pointer-events:none}
   @keyframes celpop{0%{transform:scale(.3) rotate(-10deg);opacity:0}60%{transform:scale(1.18)}100%{transform:scale(1);opacity:1}}
 
+  /* ---------- Práctica ---------- */
+  .pr-q{text-align:center;font-size:clamp(1.1rem,4.6vw,1.55rem);font-weight:800;margin:.2em 0 .7em;color:var(--ink)}
+  .pr-q b{color:var(--accent)}
+  .pr-opts{display:flex;flex-direction:column;gap:12px;max-width:560px;margin:0 auto}
+  .pr-opt{display:flex;align-items:center;gap:14px;border:3px solid var(--panel-bd);background:var(--panel);
+          border-radius:16px;padding:10px 12px;cursor:pointer;min-height:56px}
+  .pr-opt .lt{font-weight:800;font-size:1.3rem;color:var(--accent);min-width:1.4em;text-align:center}
+  .pr-opt.sel{border-color:var(--accent);box-shadow:0 0 0 3px rgba(63,123,214,.22)}
+  .pr-opt.ok{border-color:var(--good);background:rgba(47,158,74,.12)}
+  .pr-opt.no{border-color:var(--bad);background:rgba(232,88,63,.12)}
+  .hblocks{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .hbars{display:flex;flex-direction:column;gap:3px}
+  .hbar{display:flex;width:clamp(150px,42vw,230px);height:clamp(16px,4.6vw,24px);
+        border:2px solid var(--dec-d);border-radius:4px;overflow:hidden;background:var(--dec)}
+  .hbar i{flex:1;border-right:1px solid rgba(255,255,255,.5)}
+  .hbar i:last-child{border-right:none}
+  .hunits{display:flex;flex-wrap:wrap;gap:4px;max-width:calc((clamp(16px,4.6vw,24px) + 4px)*5)}
+  .hunit{width:clamp(16px,4.6vw,24px);height:clamp(16px,4.6vw,24px);border:2px solid var(--uni-d);
+         border-radius:4px;background:var(--uni)}
+
+  .pr-eq{display:flex;align-items:flex-start;justify-content:center;gap:clamp(8px,3vw,18px);flex-wrap:wrap;margin:1em 0}
+  .pr-stepper{display:flex;flex-direction:column;align-items:center;gap:5px}
+  .pr-stepper .row{display:flex;align-items:center;gap:8px}
+  .pr-arrow{width:46px;height:52px;border-radius:12px;background:var(--accent);color:#fff;font-size:1.3rem;
+            display:inline-flex;align-items:center;justify-content:center}
+  .pr-arrow:active{transform:scale(.92)}
+  .pr-box{min-width:72px;height:60px;border:3px solid var(--accent);border-radius:12px;display:flex;
+          align-items:center;justify-content:center;font-size:1.9rem;font-weight:800;color:var(--ink);background:var(--card)}
+  .pr-op{font-size:2rem;font-weight:800;color:var(--soft);align-self:center}
+  .pr-lbl{font-size:.72rem;color:var(--soft);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+  .pr-eqN{font-size:1.9rem;font-weight:800;color:var(--accent);align-self:center}
+
   .foot{color:#8aa6c4;font-size:.78rem;text-align:center;margin-top:auto;padding-top:14px}
 </style>
 </head>
@@ -334,10 +367,10 @@
     <p class="author"><b>Elaborado por: Alberto Jiménez Ruiz</b><br>Asesor Regional de Matemática · DRE Cartago · DAP 2026</p>
 
     <div class="menu">
-      <button class="menu-btn b-lab" onclick="openFamilia('lab')">
-        <span class="ic">🧪</span>
-        <span>Laboratorio</span>
-        <small>Explora un número con suma y con resta:<br>32 = 30 + 2  y  32 = 40 − 8</small>
+      <button class="menu-btn b-prac" onclick="openFamilia('practica')">
+        <span class="ic">✏️</span>
+        <span>Práctica</span>
+        <small>Ejercicios de composición y descomposición<br>que se adaptan a la familia</small>
       </button>
       <button class="menu-btn b-desc" onclick="openFamilia('juego')">
         <span class="ic">🐢</span>
@@ -367,45 +400,29 @@
     </div>
   </section>
 
-  <!-- ===================== LABORATORIO ===================== -->
-  <section id="lab" class="screen">
+  <!-- ===================== PRÁCTICA ===================== -->
+  <section id="practica" class="screen">
     <div class="topbar">
       <button class="icon-btn" onclick="go('home')" aria-label="Inicio">🏠</button>
-      <h2>Laboratorio de bloques</h2>
-      <span class="pill fam" id="labFam">Familia</span>
-      <button class="icon-btn" onclick="openFamilia('lab')" aria-label="Cambiar familia">🔀</button>
+      <h2>Práctica</h2>
+      <span class="pill">⭐ <span id="prScore">0</span></span>
+      <span class="pill fam" id="prFam">Familia</span>
+      <button class="icon-btn" onclick="openFamilia('practica')" aria-label="Cambiar familia">🔀</button>
       <button class="icon-btn theme-toggle" onclick="toggleTheme()" aria-label="Cambiar a tema oscuro">🌙</button>
-      <button class="icon-btn" id="labHear" aria-label="Escuchar">🔊</button>
+      <button class="icon-btn" id="prHear" aria-label="Escuchar">🔊</button>
     </div>
 
     <div class="card">
-      <p style="text-align:center;color:var(--soft);margin:.1em 0 .5em">
-        Elige un número y míralo de dos formas: <b style="color:var(--good)">sumando</b> y <b style="color:#e28a3a">restando</b>.
-      </p>
-      <div class="lab-pick">
-        <button class="step-btn minus" onclick="labStep(-1)" aria-label="Bajar">−</button>
-        <span class="val" id="labVal">10</span>
-        <button class="step-btn plus" onclick="labStep(1)" aria-label="Subir">+</button>
+      <p class="pr-q" id="prQ">—</p>
+      <div id="prBody"></div>
+      <div class="feedback" id="prFb">&nbsp;</div>
+      <div class="controls">
+        <button class="btn-big" id="prCheck" onclick="prCheck()">✔️ Comprobar</button>
+        <button class="btn-big ghost" onclick="prNew()">🔄 Otro ejercicio</button>
       </div>
-      <div style="text-align:center"><input class="slider" type="range" id="labSlider" min="10" max="20" value="10" aria-label="Elegir número"></div>
-
-      <div class="lab-cards" style="margin-top:14px">
-        <div class="lab-card suma">
-          <h3>➕ Con suma</h3>
-          <div class="expr" id="labSumExpr"></div>
-          <div class="blocks" id="labSumBlocks"></div>
-        </div>
-        <div class="lab-card resta">
-          <h3>➖ Con resta</h3>
-          <div class="expr" id="labSubExpr"></div>
-          <div class="blocks" id="labSubBlocks"></div>
-        </div>
-      </div>
-
       <div class="legend">
         <span><i class="swatch sw-dec"></i> decena = 10</span>
         <span><i class="swatch sw-uni"></i> unidad = 1</span>
-        <span><i class="swatch" style="background:#fff;border:2px solid var(--bad)"></i> se quita (resta)</span>
       </div>
     </div>
   </section>
@@ -581,19 +598,18 @@ function buildFamGrid(list){
 function openFamilia(dest){
   pendingDest=dest;
   document.getElementById('famDest').textContent =
-    dest==='lab' ? 'Laboratorio 🧪' : (dest==='juego' ? 'Juego 🐢' : 'Pizarra 📝');
-  buildFamGrid(dest==='pizarra' ? PZ_FAMILIES : FAMILIES);
+    dest==='practica' ? 'Práctica ✏️' : (dest==='juego' ? 'Juego 🐢' : 'Pizarra 📝');
+  buildFamGrid((dest==='pizarra'||dest==='practica') ? PZ_FAMILIES : FAMILIES);
   go('familia');
 }
 function chooseFamily(a,b){
   var label='De '+a+' a '+b;
-  if(pendingDest==='lab'){
-    family={min:a,max:b,label:label};
-    document.getElementById('labFam').textContent=label;
-    const s=document.getElementById('labSlider');
-    s.min=a; s.max=b;
-    labSet(a);
-    go('lab');
+  if(pendingDest==='practica'){
+    prFam={min:a,max:b,label:label};
+    document.getElementById('prFam').textContent=label;
+    prScore=0; document.getElementById('prScore').textContent=0;
+    prNew();
+    go('practica');
   }else if(pendingDest==='juego'){
     family={min:a,max:b,label:label};
     document.getElementById('jFam').textContent=label;
@@ -726,40 +742,6 @@ function toast(ok,msg){
   clearTimeout(toastT);
   toastT=setTimeout(()=>t.classList.remove('show'), ok?1400:1150);
 }
-
-/* ============ LABORATORIO ============ */
-let labN=10;
-function labStep(delta){ labSet(labN+delta); }
-function labSet(n){
-  const lo=+document.getElementById('labSlider').min, hi=+document.getElementById('labSlider').max;
-  labN=Math.max(lo,Math.min(hi,Math.round(n)));
-  document.getElementById('labVal').textContent=labN;
-  document.getElementById('labSlider').value=labN;
-  labRender();
-}
-function labRender(){
-  const n=labN, d=Math.floor(n/10), u=n%10;
-  const sumExpr=document.getElementById('labSumExpr');
-  if(d>0 && u>0)      sumExpr.innerHTML=`<span class="num">${n}</span> <span class="op">=</span> <span class="d">${d*10}</span> <span class="op">+</span> <span class="u">${u}</span>`;
-  else if(d>0)        sumExpr.innerHTML=`<span class="num">${n}</span> <span class="op">=</span> <span class="d">${d*10}</span>`;
-  else                sumExpr.innerHTML=`<span class="num">${n}</span> <span class="op">=</span> <span class="u">${u}</span>`;
-  drawBlocks(document.getElementById('labSumBlocks'), d, u, 0);
-
-  const upper=(Math.floor(n/10)+1)*10, take=upper-n;
-  document.getElementById('labSubExpr').innerHTML=
-    `<span class="num">${n}</span> <span class="op">=</span> <span class="d">${upper}</span> <span class="op">−</span> <span style="color:var(--bad)">${take}</span>`;
-  drawBlocks(document.getElementById('labSubBlocks'), upper/10, 0, take);
-}
-document.getElementById('labSlider').addEventListener('input',e=>labSet(+e.target.value));
-document.getElementById('labHear').addEventListener('click',()=>{
-  if(speaking){stopSpeak();return;}
-  const n=labN, d=Math.floor(n/10), u=n%10;
-  const upper=(Math.floor(n/10)+1)*10, take=upper-n;
-  let txt=cap(words(n))+'. Con suma: '+words(n)+' es igual a ';
-  txt += (d>0&&u>0)? words(d*10)+' más '+words(u) : (d>0? words(d*10) : words(u));
-  txt += '. Con resta: '+words(n)+' es igual a '+words(upper)+' menos '+words(take)+'.';
-  speak(txt);
-});
 
 /* ============ JUEGO DE TORTUGAS ============ */
 const TURTLE_SVG=`
@@ -1219,8 +1201,134 @@ document.getElementById('pzHear').addEventListener('click',()=>{
 });
 pzBuildPalette();
 
-/* Init laboratorio por si acaso */
-labRender();
+/* ============ PRÁCTICA ============ */
+let prFam={min:11,max:89,label:'De 11 a 89'};
+let prScore=0, prType=1, prN=12, prSel=-1, prCorrect=0, prOpts=[], prV1=0, prV2=0, prCfg=null, prDone=false;
+function prRand(a,b){ return a+Math.floor(Math.random()*(b-a+1)); }
+function prPickN(){ var lo=Math.max(2,prFam.min), hi=Math.max(lo,prFam.max); return prRand(lo,hi); }
+
+function prNew(){
+  prDone=false; prSel=-1;
+  var fb=document.getElementById('prFb'); fb.textContent=' '; fb.className='feedback';
+  document.getElementById('prCheck').disabled=false;
+  prType=prRand(1,3);
+  prN=prPickN();
+  if(prType===1) prBuildMC(); else prBuildStep();
+}
+
+/* Tipo 1: opción múltiple (composición gráfica) */
+function prDrawH(cont,t,u){
+  cont.innerHTML='';
+  if(t>0){ var bars=document.createElement('div'); bars.className='hbars';
+    for(var b=0;b<t;b++){ var bar=document.createElement('div'); bar.className='hbar';
+      for(var i=0;i<10;i++) bar.appendChild(document.createElement('i')); bars.appendChild(bar); }
+    cont.appendChild(bars); }
+  if(u>0){ var un=document.createElement('div'); un.className='hunits';
+    for(var c=0;c<u;c++){ var q=document.createElement('div'); q.className='hunit'; un.appendChild(q); }
+    cont.appendChild(un); }
+}
+function prBuildMC(){
+  var N=prN, t=Math.floor(N/10), u=N%10;
+  var correct={t:t,u:u,n:N};
+  var set={}; set[N]=1; var cand=[];
+  var tries=[{t:u,u:t},{t:t+1,u:u},{t:(t>0?t-1:t+2),u:u},{t:t,u:(u+1)%10},{t:t,u:(u>0?u-1:u+2)},{t:t+1,u:(u>0?u-1:u)}];
+  for(var i=0;i<tries.length && cand.length<2;i++){
+    var c=tries[i]; if(c.t<0||c.t>9||c.u<0||c.u>9) continue;
+    var v=c.t*10+c.u; if(v<0||v>99||set[v]) continue; set[v]=1; cand.push({t:c.t,u:c.u,n:v});
+  }
+  while(cand.length<2){ var rt=prRand(0,9),ru=prRand(0,9),rv=rt*10+ru; if(!set[rv]){set[rv]=1;cand.push({t:rt,u:ru,n:rv});} }
+  var opts=[correct,cand[0],cand[1]];
+  for(var k=opts.length-1;k>0;k--){ var j=Math.floor(Math.random()*(k+1)); var tmp=opts[k];opts[k]=opts[j];opts[j]=tmp; }
+  prOpts=opts; prCorrect=opts.indexOf(correct);
+  document.getElementById('prQ').innerHTML='¿Cuál es la composición gráfica de <b>'+N+'</b>?';
+  var body=document.getElementById('prBody'); body.innerHTML='';
+  var wrap=document.createElement('div'); wrap.className='pr-opts'; var L=['A','B','C'];
+  opts.forEach(function(o,idx){
+    var row=document.createElement('button'); row.type='button'; row.className='pr-opt';
+    row.innerHTML='<span class="lt">'+L[idx]+'</span>';
+    var g=document.createElement('div'); g.className='hblocks'; prDrawH(g,o.t,o.u); row.appendChild(g);
+    row.onclick=function(){ if(prDone)return; prSel=idx; Array.prototype.forEach.call(wrap.children,function(ch){ch.classList.remove('sel');}); row.classList.add('sel'); blip(); };
+    wrap.appendChild(row);
+  });
+  body.appendChild(wrap);
+  speak('¿Cuál es la composición gráfica de '+words(N)+'?');
+}
+
+/* Tipos 2 y 3: spinners */
+function prBuildStep(){
+  var N=prN, big=N>=10, body=document.getElementById('prBody'); body.innerHTML='';
+  if(prType===2){
+    document.getElementById('prQ').innerHTML='¿Cuál es una composición de <b>'+N+'</b>?';
+    prCfg = big ? {s1:10,max1:90,min1:0, s2:1,max2:9,min2:0, lbl:true}
+                : {s1:1,max1:9,min1:0, s2:1,max2:9,min2:0, lbl:false};
+    speak('¿Cuál es una composición de '+words(N)+'?');
+  }else{
+    document.getElementById('prQ').innerHTML='¿Cuál es una descomposición de <b>'+N+'</b>?';
+    prCfg = big ? {s1:10,max1:100,min1:10, s2:1,max2:9,min2:0, lbl:true}
+                : {s1:1,max1:18,min1:1, s2:1,max2:9,min2:0, lbl:false};
+    speak('¿Cuál es una descomposición de '+words(N)+'?');
+  }
+  prV1=prCfg.min1; prV2=prCfg.min2;
+  var op = prType===2 ? '+' : '−';
+  var eq=document.createElement('div'); eq.className='pr-eq';
+  eq.appendChild(prStepper(1, prCfg.lbl?'decenas':''));
+  var o1=document.createElement('span'); o1.className='pr-op'; o1.textContent=op; eq.appendChild(o1);
+  eq.appendChild(prStepper(2, prCfg.lbl?'unidades':''));
+  var o2=document.createElement('span'); o2.className='pr-op'; o2.textContent='='; eq.appendChild(o2);
+  var nn=document.createElement('span'); nn.className='pr-eqN'; nn.textContent=N; eq.appendChild(nn);
+  body.appendChild(eq);
+}
+function prStepper(which,label){
+  var box=document.createElement('div'); box.className='pr-stepper';
+  var row=document.createElement('div'); row.className='row';
+  var d=document.createElement('button'); d.type='button'; d.className='pr-arrow'; d.textContent='◀'; d.setAttribute('aria-label','Bajar');
+  var val=document.createElement('div'); val.className='pr-box'; val.id='prBox'+which; val.textContent=(which===1?prV1:prV2);
+  var inc=document.createElement('button'); inc.type='button'; inc.className='pr-arrow'; inc.textContent='▶'; inc.setAttribute('aria-label','Subir');
+  d.onclick=function(){ prStep(which,-1); }; inc.onclick=function(){ prStep(which,1); };
+  row.appendChild(d); row.appendChild(val); row.appendChild(inc); box.appendChild(row);
+  if(label){ var l=document.createElement('div'); l.className='pr-lbl'; l.textContent=label; box.appendChild(l); }
+  return box;
+}
+function prStep(which,dir){
+  if(prDone) return;
+  if(which===1){ prV1=Math.max(prCfg.min1,Math.min(prCfg.max1, prV1+dir*prCfg.s1)); document.getElementById('prBox1').textContent=prV1; }
+  else { prV2=Math.max(prCfg.min2,Math.min(prCfg.max2, prV2+dir*prCfg.s2)); document.getElementById('prBox2').textContent=prV2; }
+  blip();
+}
+
+function prHint(){
+  if(prType===1) return 'Fíjate en las decenas (barras) y las unidades (cubos).';
+  if(prType===2){ var t=Math.floor(prN/10)*10,u=prN%10; return prN<10?('Prueba 1 + '+(prN-1)):('Prueba '+t+' + '+u); }
+  var up=(Math.floor(prN/10)+1)*10, tk=up-prN; return prN<10?('Prueba '+(prN+1)+' − 1'):('Prueba '+up+' − '+tk);
+}
+function prCheck(){
+  if(prDone) return;
+  var ok=false, fb=document.getElementById('prFb');
+  if(prType===1){
+    if(prSel<0){ fb.textContent='Elige una opción (A, B o C).'; fb.className='feedback'; return; }
+    ok=(prSel===prCorrect);
+    var opts=document.querySelectorAll('#prBody .pr-opt');
+    opts[prCorrect].classList.add('ok'); if(!ok) opts[prSel].classList.add('no');
+  }else if(prType===2){ ok=(prV1+prV2===prN); }
+  else { ok=(prV1-prV2===prN); }
+  if(ok){
+    prDone=true; tone(true); toast(true,'¡Correcto!');
+    prScore++; document.getElementById('prScore').textContent=prScore;
+    fb.textContent='✓ ¡Muy bien!'; fb.className='feedback good';
+    document.getElementById('prCheck').disabled=true;
+    speak('¡Correcto! ¡Muy bien!');
+    setTimeout(prNew,1500);
+  }else{
+    tone(false); toast(false,'Incorrecto');
+    fb.textContent='✗ '+prHint(); fb.className='feedback bad';
+  }
+}
+document.getElementById('prHear').addEventListener('click',function(){
+  if(speaking){stopSpeak();return;}
+  if(prType===1) speak('¿Cuál es la composición gráfica de '+words(prN)+'?');
+  else if(prType===2) speak('¿Cuál es una composición de '+words(prN)+'?');
+  else speak('¿Cuál es una descomposición de '+words(prN)+'?');
+});
 </script>
 </body>
 </html>
