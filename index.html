@@ -448,8 +448,10 @@
       </div>
 
       <div class="pz-pal">
-        <h4>Decenas</h4>
-        <div class="pz-row" id="pzPalDec"></div>
+        <div id="pzDecWrap">
+          <h4>Decenas</h4>
+          <div class="pz-row" id="pzPalDec"></div>
+        </div>
         <h4>Unidades</h4>
         <div class="pz-row" id="pzPalUni"></div>
         <h4>Signos</h4>
@@ -522,7 +524,7 @@ const FAMILIES=[
 ];
 const PZ_FAMILIES=[
   [1,3],[1,4],[1,5],[1,6],[1,7],[1,9],
-  [10,19],[20,29],[30,39],[40,49],[50,59],[60,69],[70,79],[80,89],[90,99],[10,20]
+  [10,19],[20,29],[30,39],[40,49],[50,59],[60,69],[70,79],[80,89],[90,99],[1,99]
 ];
 let family={min:10,max:20,label:'De 10 a 20'};
 let pzFam={min:11,max:89,label:'De 11 a 89'};
@@ -567,6 +569,7 @@ function chooseFamily(a,b){
   }else{ // pizarra
     pzFam={min:a,max:b,label:label};
     document.getElementById('pzFam').textContent=label;
+    pzBuildPalette();
     pzNew();
     go('pizarra');
   }
@@ -886,12 +889,19 @@ window.addEventListener('resize',()=>{ if(document.getElementById('juego').class
 
 /* ============ PIZARRA ============ */
 let pzTarget=null, pzActive='suma';
+function pzMaxTen(fam){
+  var max=fam.max;
+  if(max<10) return max>=9 ? 10 : 0;            // 1–9 necesita el 10; menores no
+  return Math.min(90, (Math.floor(max/10)+1)*10); // hasta la decena siguiente al máximo
+}
 function pzBuildPalette(){
   var dec=document.getElementById('pzPalDec'), uni=document.getElementById('pzPalUni'), sg=document.getElementById('pzPalSign');
   dec.innerHTML=''; uni.innerHTML=''; sg.innerHTML='';
-  for(let i=1;i<=9;i++) dec.appendChild(pzMakeChip(String(i*10),'dec'));
+  var maxTen=pzMaxTen(pzFam);
+  for(let v=10; v<=maxTen; v+=10) dec.appendChild(pzMakeChip(String(v),'dec'));
   for(let i=1;i<=9;i++) uni.appendChild(pzMakeChip(String(i),'uni'));
   ['+','−','='].forEach(s=> sg.appendChild(pzMakeChip(s,'sign')) );
+  document.getElementById('pzDecWrap').style.display = maxTen>=10 ? '' : 'none';
 }
 function pzMakeChip(val,kind){
   var b=document.createElement('button'); b.type='button';
@@ -928,7 +938,13 @@ function pzSumaPair(N){
   if(u===0) return [N-10,10];               // 20 -> 10 + 10
   return [Math.floor(N/10)*10,u];           // 29 -> 20 + 9
 }
-function pzRestaPair(N){ var up=(Math.floor(N/10)+1)*10; return [up, up-N]; }
+function pzRestaPair(N){
+  var maxTen=pzMaxTen(pzFam);
+  var up=(Math.floor(N/10)+1)*10;
+  if(up<=maxTen) return [up, up-N];     // usar la decena siguiente si está disponible
+  if(N+1<=9) return [N+1, 1];           // si no, resta de unidades (ej. 4 = 5 − 1)
+  return [up, up-N];
+}
 function pzHasResta(T){ for(const a of VALUES) for(const b of VALUES){ if(a!==b && a-b===T) return true; } return false; }
 
 function pzNew(){
