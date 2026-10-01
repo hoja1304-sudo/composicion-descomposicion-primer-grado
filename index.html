@@ -289,6 +289,25 @@
 
   .pz-controls{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:14px}
 
+  /* bloques dentro de cada zona */
+  .blk-tools{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;
+             margin:.7em 0 .2em;border-top:1px dashed var(--panel-bd);padding-top:.7em}
+  .blk-lbl{color:var(--soft);font-weight:800;font-size:.82rem;width:100%;text-align:center;margin-bottom:.1em}
+  .blk-btn{display:inline-flex;align-items:center;gap:.35em;background:var(--card);
+           border:2px solid var(--panel-bd);border-radius:12px;min-height:44px;padding:4px 12px;
+           color:var(--ink);font-weight:800;font-size:1rem}
+  .blk-btn:active{transform:scale(.94)}
+  .blk-btn.clr{font-size:1.15rem}
+  .blk-btn .mini-rod{width:9px;height:30px;border-radius:2px;background:var(--dec);border:1.5px solid var(--dec-d)}
+  .blk-btn .mini-cube{width:18px;height:18px;border-radius:3px;background:var(--uni);border:2px solid var(--uni-d)}
+  .blk-val{font-weight:800;color:var(--accent);font-size:1.05rem}
+  .pz-blocks{display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px;justify-content:center;
+             min-height:72px;padding:6px 0}
+  .pz-blocks:empty::before{content:"Arma el número con bloques…";color:#9fb4cc;font-size:.85rem;font-weight:600}
+  .pz-blocks.resta .rod i{cursor:pointer}
+  .pz-blocks.resta .unit{cursor:pointer}
+  .blk-hint{text-align:center;color:var(--soft);font-size:.8rem;margin:.1em 0 .2em}
+
   .celebrate{
     position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
     background:rgba(10,20,35,.5);opacity:0;pointer-events:none;transition:opacity .2s ease;z-index:70;
@@ -465,6 +484,14 @@
             <div class="pz-zone" id="pzZoneSuma"></div>
             <span class="pz-end" id="pzSumEnd">= —</span>
           </div>
+          <div class="blk-tools">
+            <span class="blk-lbl">Y con bloques:</span>
+            <button class="blk-btn" onclick="pzBlkAdd('suma','bar')" aria-label="Agregar barra de decena"><span class="mini-rod"></span>+10</button>
+            <button class="blk-btn" onclick="pzBlkAdd('suma','cube')" aria-label="Agregar cubo de unidad"><span class="mini-cube"></span>+1</button>
+            <button class="blk-btn clr" onclick="pzBlkClear('suma')" aria-label="Limpiar bloques">🧹</button>
+            <span class="blk-val" id="pzBlkValSuma">= 0</span>
+          </div>
+          <div class="pz-blocks suma" id="pzBlkSuma"></div>
           <div class="pz-fb" id="pzFbSuma">&nbsp;</div>
         </div>
         <div class="pz-area resta" id="pzAreaResta" onclick="pzSetActive('resta')">
@@ -473,6 +500,15 @@
             <div class="pz-zone" id="pzZoneResta"></div>
             <span class="pz-end" id="pzSubEnd">= —</span>
           </div>
+          <div class="blk-tools">
+            <span class="blk-lbl">Y con bloques:</span>
+            <button class="blk-btn" onclick="pzBlkAdd('resta','bar')" aria-label="Agregar barra de decena"><span class="mini-rod"></span>+10</button>
+            <button class="blk-btn" onclick="pzBlkAdd('resta','cube')" aria-label="Agregar cubo de unidad"><span class="mini-cube"></span>+1</button>
+            <button class="blk-btn clr" onclick="pzBlkClear('resta')" aria-label="Limpiar bloques">🧹</button>
+            <span class="blk-val" id="pzBlkValResta">= 0</span>
+          </div>
+          <div class="blk-hint">Toca un cubo para quitarlo ✗ (se pone blanco)</div>
+          <div class="pz-blocks resta" id="pzBlkResta"></div>
           <div class="pz-fb" id="pzFbResta">&nbsp;</div>
         </div>
       </div>
@@ -928,11 +964,89 @@ function pzAdd(which,val,kind){
   pzSetActive(which);
 }
 function pzClear(which){ document.getElementById(which==='suma'?'pzZoneSuma':'pzZoneResta').innerHTML=''; }
-function pzClearActive(){ pzClear(pzActive); pzFb(pzActive,'',''); }
+function pzClearActive(){ pzClear(pzActive); pzBlkClear(pzActive); pzFb(pzActive,'',''); }
 function pzFb(which,state,text){
   var el=document.getElementById(which==='suma'?'pzFbSuma':'pzFbResta');
   el.textContent=text||' '; el.className='pz-fb'+(state?' '+state:'');
 }
+/* --- bloques gráficos dentro de cada zona --- */
+let pzBlk={ suma:{bars:0,cubes:0}, resta:{rods:[],cubes:[]} };
+function pzBlkAdd(which,kind){
+  pzSetActive(which);
+  if(which==='suma'){
+    if(kind==='bar') pzBlk.suma.bars++; else pzBlk.suma.cubes++;
+  }else{
+    if(kind==='bar') pzBlk.resta.rods.push([false,false,false,false,false,false,false,false,false,false]);
+    else pzBlk.resta.cubes.push(false);
+  }
+  pzRenderBlk(which); blip();
+}
+function pzBlkClear(which){
+  if(which==='suma') pzBlk.suma={bars:0,cubes:0};
+  else pzBlk.resta={rods:[],cubes:[]};
+  pzRenderBlk(which);
+}
+function pzBlkSumaVal(){ return pzBlk.suma.bars*10 + pzBlk.suma.cubes; }
+function pzBlkRestaInfo(){
+  var r=pzBlk.resta;
+  var tot=r.rods.length*10 + r.cubes.length;
+  var removed=r.cubes.filter(Boolean).length;
+  r.rods.forEach(function(row){ removed+=row.filter(Boolean).length; });
+  return {value:tot-removed, removed:removed, total:tot};
+}
+function pzRenderBlk(which){
+  if(which==='suma'){
+    var cont=document.getElementById('pzBlkSuma'); cont.innerHTML='';
+    var s=pzBlk.suma;
+    if(s.bars>0){
+      var g=document.createElement('div'); g.className='group';
+      for(let b=0;b<s.bars;b++){
+        var rod=document.createElement('div'); rod.className='rod pop'; rod.title='Quitar barra';
+        rod.onclick=function(e){ e.stopPropagation(); pzBlk.suma.bars--; pzRenderBlk('suma'); };
+        for(let i=0;i<10;i++) rod.appendChild(document.createElement('i'));
+        g.appendChild(rod);
+      }
+      cont.appendChild(g);
+    }
+    if(s.cubes>0){
+      var gu=document.createElement('div'); gu.className='units-grid';
+      for(let c=0;c<s.cubes;c++){
+        var u=document.createElement('div'); u.className='unit pop'; u.title='Quitar cubo';
+        u.onclick=function(e){ e.stopPropagation(); pzBlk.suma.cubes--; pzRenderBlk('suma'); };
+        gu.appendChild(u);
+      }
+      cont.appendChild(gu);
+    }
+    document.getElementById('pzBlkValSuma').textContent='= '+pzBlkSumaVal();
+  }else{
+    var cont2=document.getElementById('pzBlkResta'); cont2.innerHTML='';
+    var r=pzBlk.resta;
+    if(r.rods.length){
+      var g2=document.createElement('div'); g2.className='group';
+      r.rods.forEach(function(cells,ri){
+        var rod=document.createElement('div'); rod.className='rod pop';
+        cells.forEach(function(rem,ci){
+          var cell=document.createElement('i'); if(rem) cell.className='gone';
+          cell.onclick=function(e){ e.stopPropagation(); pzBlk.resta.rods[ri][ci]=!pzBlk.resta.rods[ri][ci]; pzRenderBlk('resta'); };
+          rod.appendChild(cell);
+        });
+        g2.appendChild(rod);
+      });
+      cont2.appendChild(g2);
+    }
+    if(r.cubes.length){
+      var gu2=document.createElement('div'); gu2.className='units-grid';
+      r.cubes.forEach(function(rem,ci){
+        var u=document.createElement('div'); u.className='unit pop'+(rem?' gone':'');
+        u.onclick=function(e){ e.stopPropagation(); pzBlk.resta.cubes[ci]=!pzBlk.resta.cubes[ci]; pzRenderBlk('resta'); };
+        gu2.appendChild(u);
+      });
+      cont2.appendChild(gu2);
+    }
+    document.getElementById('pzBlkValResta').textContent='= '+pzBlkRestaInfo().value;
+  }
+}
+
 function pzSumaPair(N){
   if(N<10) return [1, N-1];                 // 3 -> 1 + 2
   var u=N%10;
@@ -957,6 +1071,7 @@ function pzNew(){
   document.getElementById('pzSumEnd').textContent='= '+pzTarget;
   document.getElementById('pzSubEnd').textContent='= '+pzTarget;
   pzClear('suma'); pzClear('resta');
+  pzBlkClear('suma'); pzBlkClear('resta');
   pzFb('suma','','');
   if(pzHasResta(pzTarget)) pzFb('resta','','');
   else pzFb('resta','','Con estas fichas, '+pzTarget+' no se puede como resta.');
@@ -984,25 +1099,43 @@ function pzEval(which){
   return {valid:valid, value:result, hasPlus:hasPlus, hasMinus:hasMinus, nums:nums};
 }
 function pzCheck(){
+  // ---- SUMA: fichas + bloques ----
   var s=pzEval('suma');
-  var sumaGood = s.valid && s.value===pzTarget && s.hasPlus && !s.hasMinus && s.nums>=2;
+  var sumaFichaGood = s.valid && s.value===pzTarget && s.hasPlus && !s.hasMinus && s.nums>=2;
+  var sumaBlkGood = pzBlkSumaVal()===pzTarget && (pzBlk.suma.bars+pzBlk.suma.cubes)>0;
+  var sumaGood = sumaFichaGood && sumaBlkGood;
   if(sumaGood) pzFb('suma','ok','✓ ¡Correcto!');
-  else { var sp=pzSumaPair(pzTarget); pzFb('suma','bad','✗ Prueba: '+sp[0]+' + '+sp[1]); }
+  else {
+    var m=[]; var sp=pzSumaPair(pzTarget);
+    if(!sumaFichaGood) m.push('fichas '+sp[0]+'+'+sp[1]);
+    if(!sumaBlkGood) m.push('bloques '+sp[0]+' y '+sp[1]);
+    pzFb('suma','bad','✗ Prueba: '+m.join(' · '));
+  }
 
+  // ---- RESTA: fichas + bloques ----
   var restaGood, restaPosible=pzHasResta(pzTarget);
   if(!restaPosible){
     restaGood=true;
     pzFb('resta','','Con estas fichas, '+pzTarget+' no se puede como resta.');
   }else{
     var r=pzEval('resta');
-    restaGood = r.valid && r.value===pzTarget && r.hasMinus && r.nums>=2;
+    var restaFichaGood = r.valid && r.value===pzTarget && r.hasMinus && r.nums>=2;
+    var ri=pzBlkRestaInfo();
+    var restaBlkGood = ri.value===pzTarget && ri.removed>0;
+    restaGood = restaFichaGood && restaBlkGood;
+    var rp=pzRestaPair(pzTarget);
     if(restaGood) pzFb('resta','ok','✓ ¡Correcto!');
-    else { var rp=pzRestaPair(pzTarget); pzFb('resta','bad','✗ Prueba: '+rp[0]+' − '+rp[1]); }
+    else {
+      var m2=[];
+      if(!restaFichaGood) m2.push('fichas '+rp[0]+'−'+rp[1]);
+      if(!restaBlkGood) m2.push('bloques: pon '+rp[0]+' y quita '+rp[1]);
+      pzFb('resta','bad','✗ Prueba: '+m2.join(' · '));
+    }
   }
 
   if(sumaGood && restaGood){
     tone(true); pzCelebrate();
-    speak('¡Excelente! Descompusiste '+words(pzTarget)+'. ¡Muy bien!');
+    speak('¡Excelente! Descompusiste '+words(pzTarget)+' con fichas y con bloques. ¡Muy bien!');
   }else{ tone(false); }
 }
 /* ---- Fuegos artificiales animados ---- */
