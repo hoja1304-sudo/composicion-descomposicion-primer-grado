@@ -1206,13 +1206,20 @@ let prFam={min:11,max:89,label:'De 11 a 89'};
 let prScore=0, prType=1, prN=12, prSel=-1, prCorrect=0, prOpts=[], prV1=0, prV2=0, prCfg=null, prDone=false;
 function prRand(a,b){ return a+Math.floor(Math.random()*(b-a+1)); }
 function prPickN(){ var lo=Math.max(2,prFam.min), hi=Math.max(lo,prFam.max); return prRand(lo,hi); }
+/* Para descomponer: no usar el número mayor de la familia (su resta sería N−0) ni los redondos (10,20,…) */
+function prPickN3(){
+  var lo=Math.max(2,prFam.min), hi=Math.max(lo,prFam.max-1);
+  var cands=[]; for(var n=lo;n<=hi;n++){ if(n%10!==0) cands.push(n); }
+  if(!cands.length){ for(var m=lo;m<=hi;m++) cands.push(m); }
+  return cands[Math.floor(Math.random()*cands.length)];
+}
 
 function prNew(){
   prDone=false; prSel=-1;
   var fb=document.getElementById('prFb'); fb.textContent=' '; fb.className='feedback';
   document.getElementById('prCheck').disabled=false;
   prType=prRand(1,3);
-  prN=prPickN();
+  prN = (prType===3) ? prPickN3() : prPickN();
   if(prType===1) prBuildMC(); else prBuildStep();
 }
 
@@ -1260,12 +1267,12 @@ function prBuildStep(){
   if(prType===2){
     document.getElementById('prQ').innerHTML='¿Cuál es una composición de <b>'+N+'</b>?';
     prCfg = big ? {s1:10,max1:90,min1:0, s2:1,max2:9,min2:0, lbl:true}
-                : {s1:1,max1:9,min1:0, s2:1,max2:9,min2:0, lbl:false};
+                : {s1:1,max1:Math.min(9,prFam.max),min1:0, s2:1,max2:Math.min(9,prFam.max),min2:0, lbl:false};
     speak('¿Cuál es una composición de '+words(N)+'?');
   }else{
     document.getElementById('prQ').innerHTML='¿Cuál es una descomposición de <b>'+N+'</b>?';
     prCfg = big ? {s1:10,max1:100,min1:10, s2:1,max2:9,min2:0, lbl:true}
-                : {s1:1,max1:18,min1:1, s2:1,max2:9,min2:0, lbl:false};
+                : {s1:1,max1:prFam.max,min1:1, s2:1,max2:Math.min(9,prFam.max),min2:0, lbl:false};
     speak('¿Cuál es una descomposición de '+words(N)+'?');
   }
   prV1=prCfg.min1; prV2=prCfg.min2;
